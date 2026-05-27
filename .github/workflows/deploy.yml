@@ -19,15 +19,13 @@ jobs:
           node-version: '18'
 
       - name: Instalar dependencias
-        working-directory: ./frontend/Reac/mi-proyecto   # ← ruta correcta
         run: npm install
 
       - name: Build React app
-        working-directory: ./frontend/Reac/mi-proyecto   # ← ruta correcta
         run: npm run build
 
       - name: Comprimir build en tar
-        run: tar -czf build.tar.gz -C frontend/Reac/mi-proyecto/dist .  # ← dist no build (Vite)
+        run: tar -czf build.tar.gz dist/
 
       - name: Instalar sshpass
         run: sudo apt-get install -y sshpass
@@ -44,7 +42,6 @@ jobs:
             -o StrictHostKeyChecking=no \
             build.tar.gz \
             $SSH_USER@$SSH_HOST:~/domains/vidriobras.com/public_html/build.tar.gz
-
 
       - name: Extraer y limpiar en el servidor
         env:
