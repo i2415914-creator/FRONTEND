@@ -31,7 +31,7 @@ function Footer() {
       }}
     >
       <span className="font-body text-xs sm:text-sm font-semibold text-center w-full" style={{ fontFamily: FONTS.body }}>
-        © 2026 VIDRIOBRAS. Todos los derechos reservados.
+        © 2026--- VIDRIOBRAS. Todos los derechos reservados.
       </span>
     </footer>
   );
