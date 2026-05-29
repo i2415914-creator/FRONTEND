@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-const ETL_API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const ETL_API = import.meta.env.VITE_API_URL || 'https://api.vidriobras.com';
 const ETL_PREFIX = '/api/etl';
 const CHART_TYPES = [
   { value: 'bar',  label: 'Gráfica de Barras' },
