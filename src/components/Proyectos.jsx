@@ -23,7 +23,7 @@ const ServicioPanel = ({ servicio, servicios, onClose, onSelect }) => {
   const overlayRef = useRef(null);
   const [navH, setNavH] = useState(64);
 
-  /* detectar navbar height */
+  /* detectar -- navbar height */
   useEffect(() => {
     const nav = document.querySelector('nav');
     if (nav) setNavH(nav.getBoundingClientRect().height);

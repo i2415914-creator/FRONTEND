@@ -1,0 +1,61 @@
+name: Deploy React App via SSH
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: PROD
+ 
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Comprimir build en tar (solo contenido de dist)
+        run: tar -czf build.tar.gz -C dist .
+
+      - name: Instalar sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Subir tar al servidor
+        env:
+          SSH_HOST: 62.72.62.79
+          SSH_PORT: 65002
+          SSH_USER: u978793163
+          SSH_PASSWORD: ${{ secrets.GT_SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" scp \
+            -P "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            build.tar.gz \
+            $SSH_USER@$SSH_HOST:~/domains/vidriobras.com/public_html/build.tar.gz
+
+      - name: Extraer y limpiar en el servidor
+        env:
+          SSH_HOST: 62.72.62.79
+          SSH_PORT: 65002
+          SSH_USER: u978793163
+          SSH_PASSWORD: ${{ secrets.GT_SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh \
+            -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            $SSH_USER@$SSH_HOST \
+            "cd ~/domains/vidriobras.com/public_html && \
+             find . -mindepth 1 -maxdepth 1 -not -name 'build.tar.gz' -exec rm -rf {} + && \
+             tar -xzf build.tar.gz && \
+             rm build.tar.gz && \
+             ls -la"
