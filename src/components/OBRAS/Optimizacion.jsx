@@ -502,6 +502,9 @@ const OptimizacionCortes = ({ notificacion, onBack, soloCortes = false, onFinali
   const [cargando, setCargando]         = useState(false);
   const [showNotif, setShowNotif]       = useState(true);
   const [cortesData, setCortesData]     = useState(DEMO_CUTS);
+  const [planchasOptimizadas, setPlanchas] = useState([]);
+  const [cargandoOpt, setCargandoOpt]   = useState(false);
+  const [dimensionesPlancha, setDimensionesPlancha] = useState({ ancho: 330, alto: 214 });
 
   const showToast = useCallback((msg, tipo = 'success') => {
     const id = Date.now() + Math.random();
@@ -536,6 +539,58 @@ const OptimizacionCortes = ({ notificacion, onBack, soloCortes = false, onFinali
       .catch(() => {})
       .finally(() => setCargando(false));
   }, [notificacion?.id]);
+
+  /* Fetch optimización de vidrio desde backend */
+  useEffect(() => {
+    if (!cortesPorProducto.length) return;
+
+    // Preparar productos para optimización
+    const productos = cortesPorProducto.flatMap((prod, pi) => {
+      return (prod.cortes || []).flatMap((corte, ci) => {
+        const ancho = Number(corte.ancho_cm || 0);
+        const alto = Number(corte.alto_cm || 0);
+        const cantidad = Math.max(1, Number(corte.cantidad || 1));
+
+        if (ancho <= 0 || alto <= 0) return [];
+
+        return Array.from({ length: cantidad }, (_, idx) => ({
+          id: `${String.fromCharCode(65 + pi)}${ci + 1}`,
+          ancho,
+          alto,
+          cantidad: 1,
+        }));
+      });
+    });
+
+    if (!productos.length) return;
+
+    setCargandoOpt(true);
+    fetch('/api/optimizacion-cortes/calcular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo_material: 'vidrio',
+        plancha_ancho: dimensionesPlancha.ancho,
+        plancha_alto: dimensionesPlancha.alto,
+        productos,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.planchas) {
+          setPlanchas(data.planchas);
+          setDimensionesPlancha({
+            ancho: data.plancha_ancho_usado || dimensionesPlancha.ancho,
+            alto: data.plancha_alto_usado || dimensionesPlancha.alto,
+          });
+          showToast(`Optimización: ${data.planchas.length} plancha(s) · ${data.eficiencia_global}% eficiencia`, 'success');
+        } else {
+          showToast(data.error || 'Error al optimizar', 'error');
+        }
+      })
+      .catch(err => showToast('Error conectando con optimizador: ' + err.message, 'error'))
+      .finally(() => setCargandoOpt(false));
+  }, [cortesPorProducto, showToast]);
 
   /* Derived */
   const totalCortes     = cortesData.length;
@@ -745,7 +800,27 @@ const OptimizacionCortes = ({ notificacion, onBack, soloCortes = false, onFinali
                 </div>
                 <div className="opt-svg-wrap">
                   <div className="opt-svg-inner">
-                    <NestingSVG/>
+                    {cargandoOpt ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13 }}>
+                        <IconLoader size={16} style={{ animation: 'optSpin .7s linear infinite', marginRight: 8 }}/>
+                        Calculando optimización...
+                      </div>
+                    ) : planchasOptimizadas.length > 0 ? (
+                      <NestingSVG
+                        pieces={planchasOptimizadas[0].cortes.map((c, i) => ({
+                          id: c.corte_id || `P${i+1}`,
+                          x: Number(c.x || 0) * 10,
+                          y: Number(c.y || 0) * 10,
+                          w: Number(c.ancho || 0) * 10,
+                          h: Number(c.alto || 0) * 10,
+                          fi: i % 6,
+                        }))}
+                        sheetW={dimensionesPlancha.ancho * 10}
+                        sheetH={dimensionesPlancha.alto * 10}
+                      />
+                    ) : (
+                      <NestingSVG/>
+                    )}
                   </div>
                 </div>
                 <div className="opt-tools-bar">
