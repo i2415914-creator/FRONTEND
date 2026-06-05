@@ -3,9 +3,11 @@ import "./index.css";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { API_BASE_URL } from "./config";
 
-// Normaliza todas las llamadas fetch que usan /api y construye URL completa en el backend configurado.
+// 1. Eliminamos el import problemático y definimos la constante vacía aquí mismo:
+const API_BASE_URL = "";
+
+// 2. Tu interceptor fetch sigue igual y funcionará perfecto con Nginx:
 const originalFetch = window.fetch.bind(window);
 window.fetch = async (resource, init) => {
   if (typeof resource === "string" && resource.startsWith("/api")) {

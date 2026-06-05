@@ -1,4 +1,6 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://api.vidriobras.com").replace(/\/$/, "");
+// Forzamos a que en producción use una ruta relativa. 
+// Así Nginx interceptará cualquier '/api/...' y lo mandará a tu backend real.
+export const API_BASE_URL = "";
 
 export const buildApiUrl = (path = "") => {
   const safePath = path.startsWith("/") ? path : `/${path}`;
@@ -24,7 +26,6 @@ export const apiFetch = async (resource, init) => {
 
   const contentType = res.headers.get("content-type") || "";
   if (res.status >= 400) {
-    // show detail when calling API incorrectly
     const text = await res.text();
     throw new Error(`API error (${res.status}) ${res.statusText}: ${text}`);
   }
